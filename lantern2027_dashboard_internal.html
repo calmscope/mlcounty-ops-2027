@@ -215,7 +215,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="stat"><div class="val green">0</div><div class="lbl">已完成</div></div>
     <div class="stat"><div class="val" style="color:var(--a2)">0</div><div class="lbl">進行中</div></div>
   </div>
-  <span class="gen-time">更新：2026-07-06 08:34</span>
+  <span class="gen-time">更新：2026-07-07 23:10</span>
   <div class="filter-row" id="meeting-filters">
     <input id="search" type="text" placeholder="搜尋…" oninput="onSearch(this.value)">
     <button class="filter-btn active" onclick="setMonth('all',this)">全部</button>
@@ -327,7 +327,7 @@ function renderGroups() {
   el.innerHTML=GROUPS.map(g=>{
     const pct=MAX>0?Math.round(g['預算']/MAX*100):0;
     const sel=activeGroup===g['組別']?'selected':'';
-    const budget=g['預算']>0?(g['預算']/100).toFixed(1)+'億':'－';
+    const budget=g['預算']>0?g['預算'].toLocaleString()+'萬':'－';
     const cnt=MEETINGS.filter(m=>(m.groups||[]).includes(g['組別'])).length;
     return `<div class="group-card ${sel}" onclick="setGroup('${g['組別']}')">
       <div class="group-name">${g['序號']}. ${g['組別']}<span class="side-cnt">${cnt}</span></div>
