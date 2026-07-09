@@ -135,6 +135,21 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .s-sources span{color:var(--a4);}
 .no-result{color:var(--text2);padding:20px;font-size:15px;}
 
+/* ── 待辦事項彙整 Tab ── */
+#tab-todos{flex-direction:column;}
+#todos-toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+#todos-toolbar .s-stat{font-size:14px;color:var(--text2);margin-right:4px;}
+#todos-toolbar .s-stat span{color:var(--a3);font-weight:700;font-size:16px;}
+#todos-body{flex:1;overflow-y:auto;padding:12px 16px;}
+.todo-item{display:flex;gap:9px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:5px;transition:border-color .15s;}
+.todo-item:hover{border-color:var(--a3);}
+.todo-check{color:var(--a3);font-size:15px;flex-shrink:0;line-height:1.5;}
+.todo-main{flex:1;min-width:0;}
+.todo-text{font-size:14.5px;line-height:1.55;color:var(--text);word-break:break-word;white-space:pre-wrap;}
+.todo-meta{font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.todo-meta .tm-title{color:var(--a2);cursor:pointer;}
+.todo-meta .tm-title:hover{text-decoration:underline;}
+
 /* ── 清單模式 ── */
 .view-toggle{display:flex;gap:2px;background:var(--bg);border-radius:7px;padding:2px;margin-left:auto;}
 .view-btn{padding:3px 10px;border-radius:5px;border:none;background:none;color:var(--text2);cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;}
@@ -238,6 +253,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('meetings',this)">📋 會議時間軸</button>
+    <button class="tab-btn" onclick="switchTab('todos',this)">✅ 待辦事項</button>
     <button class="tab-btn" onclick="switchTab('sustain',this)">🌱 永續議題</button>
   </div>
 
@@ -246,6 +262,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="stat"><div class="val red">25</div><div class="lbl">高風險</div></div>
     <div class="stat"><div class="val yellow">62</div><div class="lbl">中風險</div></div>
     <div class="stat"><div class="val orange">106</div><div class="lbl">卡關</div></div>
+    <div class="stat"><div class="val" style="color:var(--a3)">110</div><div class="lbl">有待辦</div></div>
     <div style="display:flex;gap:12px;border-left:1px solid var(--border);padding-left:10px;margin-left:4px;">
     <div class="stat"><div class="val" style="color:var(--a2)">82</div><div class="lbl">排程</div></div>
     <div class="stat"><div class="val" style="color:#ffa726">30</div><div class="lbl">溝通</div></div>
@@ -255,7 +272,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="stat"><div class="val green">0</div><div class="lbl">已完成</div></div>
     <div class="stat"><div class="val" style="color:var(--a2)">0</div><div class="lbl">進行中</div></div>
   </div>
-  <span class="gen-time">更新：2026-07-10 01:35</span>
+  <span class="gen-time">更新：2026-07-10 02:18</span>
   <div class="filter-row" id="meeting-filters">
     <input id="search" type="text" placeholder="搜尋…" oninput="onSearch(this.value)">
     <button class="filter-btn active" onclick="setMonth('all',this)">全部</button>
@@ -325,7 +342,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
   </div>
 
-  <!-- Tab B：永續議題 -->
+  <!-- Tab B：待辦事項彙整 -->
+  <div class="tab-panel" id="tab-todos">
+    <div id="todos-toolbar">
+      <span class="s-stat">待辦事項 <span id="t-count">0</span> 條</span>
+      <input id="t-search" type="text" placeholder="搜尋待辦…" oninput="onTSearch(this.value)"
+        style="padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;outline:none;max-width:200px;">
+      <span style="font-size:12px;color:var(--text2)">依月份分組｜點會議名可看全文</span>
+    </div>
+    <div id="todos-body"></div>
+  </div>
+
+  <!-- Tab C：永續議題 -->
   <div class="tab-panel" id="tab-sustain">
     <div id="sustain-toolbar">
       <span class="s-stat">議題總數 <span id="s-count">167</span></span>
@@ -358,6 +386,7 @@ const SUSTAIN_ISSUES = [{"name": "（20260701_數研處【17 科技資訊組】�
 let activeMonth='all', activeGroup=null, activeZone=null, activeRisk=null;
 let showBlockOnly=false, showTodoOnly=false, searchQuery='', activeMType='all', activeCType='all';
 let sSFilterStatus='all', sSSearchQuery='', sSViewMode='card';
+let tSearchQuery='';
 let currentTab='meetings';
 
 // ── Tab 切換 ──────────────────────────────────────────────────────────────────
@@ -373,6 +402,7 @@ function switchTab(tab, btn) {
   var msb=document.getElementById('mobile-side-bar'); if(msb) msb.style.display = tab==='meetings' ? '' : 'none';
   closeSide();
   if(tab==='sustain') renderSustain();
+  if(tab==='todos') renderTodos();
 }
 
 // ── 工作小組 ──────────────────────────────────────────────────────────────────
@@ -648,6 +678,54 @@ function setZone(z){activeZone=activeZone===z?null:z;renderZones();renderTimelin
 function onSearch(q){searchQuery=q;renderTimeline();}
 function setSFilter(s,btn){sSFilterStatus=s;document.querySelectorAll('.s-filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSustain();}
 function onSSearch(q){sSSearchQuery=q;renderSustain();}
+
+// ── 待辦事項彙整 Tab ──────────────────────────────────────────────────────────
+function todoItemsOf(text){
+  if(!text) return [];
+  return text.split(/\n/)
+    .map(l=>l.replace(/^[\s•\-\*·▪▸▷◆◇→\d\.、）\)]+/, '').trim())
+    .filter(l=>l.length>2);
+}
+function renderTodos(){
+  const q=tSearchQuery.toLowerCase();
+  let rows=[];
+  MEETINGS.forEach(m=>{
+    if(!m.hasTodo) return;
+    todoItemsOf(m.todos).forEach(it=>{
+      if(q&&!it.toLowerCase().includes(q)&&!m.title.toLowerCase().includes(q)) return;
+      rows.push({item:it,month:m.month,day:m.day,title:m.title,risk:m.risk,idx:m.idx,hasBody:!!m.body});
+    });
+  });
+  document.getElementById('t-count').textContent=rows.length;
+  const el=document.getElementById('todos-body');
+  if(!rows.length){el.innerHTML='<div class="no-result">沒有符合條件的待辦事項</div>';return;}
+  const byMonth={};
+  rows.forEach(r=>{(byMonth[r.month]=byMonth[r.month]||[]).push(r);});
+  const mNames={
+    '2026-01':'一月','2026-02':'二月','2026-03':'三月','2026-04':'四月',
+    '2026-05':'五月','2026-06':'六月','2026-07':'七月','2026-08':'八月',
+    '2026-09':'九月','2026-10':'十月','2026-11':'十一月','2026-12':'十二月',
+    '2027-01':'116/1月','2027-02':'116/2月','2027-03':'116/3月','2027-04':'116/4月',
+  };
+  el.innerHTML=Object.keys(byMonth).sort().map(mo=>{
+    const list=byMonth[mo];
+    return `<div class="month-block"><div class="month-label">${mNames[mo]||mo}（${list.length} 條）</div>
+      ${list.map(r=>{
+        const rDot=r.risk.includes('高')?'🔴':r.risk.includes('中')?'🟡':'🟢';
+        const titleEl=r.hasBody
+          ?`<span class="tm-title" onclick="openBodyDrawer(${r.idx})">${r.title}</span>`
+          :`<span class="tm-title" style="cursor:default;color:var(--text2)">${r.title}</span>`;
+        return `<div class="todo-item">
+          <span class="todo-check">☐</span>
+          <div class="todo-main">
+            <div class="todo-text">${r.item}</div>
+            <div class="todo-meta"><span>${rDot} ${r.day}</span>${titleEl}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+  }).join('');
+}
+function onTSearch(q){tSearchQuery=q;renderTodos();}
 
 // ── 完整會議記錄 Drawer ───────────────────────────────────────────────────────
 function openBodyDrawer(idx){
