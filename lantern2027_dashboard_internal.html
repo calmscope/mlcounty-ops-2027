@@ -189,6 +189,45 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .body-btn{padding:2px 10px;border-radius:10px;border:1px solid var(--a4);background:rgba(206,147,216,.12);color:var(--a4);cursor:pointer;font-size:12px;transition:all .15s;margin-left:4px;}
 .body-btn:hover{background:rgba(206,147,216,.3);}
 .det-action-row{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;}
+
+/* ── 手機版切換列 / 抽屜遮罩（桌面隱藏）── */
+#mobile-side-bar{display:none;}
+#side-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:110;}
+#side-backdrop.open{display:block;}
+
+/* ── 手機版 RWD ── */
+@media (max-width:768px){
+  body{height:auto;min-height:100vh;overflow-x:hidden;overflow-y:auto;font-size:15px;}
+  #topbar{padding:8px 12px;gap:6px 10px;}
+  #topbar h1{font-size:16px;width:100%;}
+  .tab-nav{width:100%;}
+  .tab-btn{flex:1;text-align:center;font-size:14px;padding:6px 8px;}
+  .stats{margin-left:0;width:100%;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .stat .val{font-size:18px;}
+  .gen-time{width:100%;}
+  .filter-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+  #type-filters{flex-direction:column;align-items:stretch;}
+  #type-filters>span{display:none;}
+  #mtype-filters,#ctype-filters{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+  #search{max-width:none;flex:1;}
+  #main{flex-direction:column;overflow:visible;}
+  .tab-panel.active{flex-direction:column;}
+  #mobile-side-bar{display:flex;gap:8px;padding:7px 12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:60;}
+  .mside-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;}
+  .mside-btn:active{background:var(--accent);color:#000;}
+  #panel-groups,#panel-zones{position:fixed;top:0;bottom:0;height:auto;width:82%;max-width:300px;z-index:120;overflow-y:auto;transition:transform .25s ease;box-shadow:0 0 24px rgba(0,0,0,.5);}
+  #panel-groups{left:0;transform:translateX(-105%);border-right:1px solid var(--border);}
+  #panel-groups.mobile-open{transform:translateX(0);}
+  #panel-zones{right:0;left:auto;transform:translateX(105%);border-left:1px solid var(--border);}
+  #panel-zones.mobile-open{transform:translateX(0);}
+  #panel-timeline{padding:8px 10px;overflow:visible;}
+  #panel-timeline h2{margin-top:4px;}
+  .meeting-detail{padding:0 9px 9px 12px;}
+  #sustain-toolbar{gap:6px;}
+  .sustain-cards{grid-template-columns:1fr;}
+  #body-drawer{width:94%;right:-100%;}
+  #body-drawer.open{right:0;}
+}
 </style>
 </head>
 <body>
@@ -215,7 +254,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="stat"><div class="val green">0</div><div class="lbl">已完成</div></div>
     <div class="stat"><div class="val" style="color:var(--a2)">0</div><div class="lbl">進行中</div></div>
   </div>
-  <span class="gen-time">更新：2026-07-09 23:52</span>
+  <span class="gen-time">更新：2026-07-10 01:35</span>
   <div class="filter-row" id="meeting-filters">
     <input id="search" type="text" placeholder="搜尋…" oninput="onSearch(this.value)">
     <button class="filter-btn active" onclick="setMonth('all',this)">全部</button>
@@ -240,8 +279,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <button class="filter-btn active" onclick="setMType('all',this)">全部</button>
       <button class="filter-btn" onclick="setMType('內部研商',this)" style="color:var(--a4)">🏛 內部研商 <span class="mtype-count">82</span></button>
     
-      <button class="filter-btn" onclick="setRisk('高',this)" style="color:#ef5350;margin-left:2px">🔴 高風險</button>
-      <button class="filter-btn" onclick="setBlock(this)" style="color:#ffa726">⚠ 有卡關</button>
+      <button class="filter-btn toggle-btn" onclick="setRisk('高',this)" style="color:#ef5350;margin-left:2px">🔴 高風險</button>
+      <button class="filter-btn toggle-btn" onclick="setBlock(this)" style="color:#ffa726">⚠ 有卡關</button>
+      <button class="filter-btn toggle-btn" onclick="setTodo(this)" style="color:var(--a3)">✓ 有待辦</button>
     </div>
     <span style="border-left:2px solid var(--border);height:18px;margin:0 10px;flex-shrink:0;align-self:center;"></span>
     <div id="ctype-filters" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
@@ -252,6 +292,13 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
   </div>
 </div>
+
+<!-- 手機版：左右兩區收合為抽屜切換 -->
+<div id="mobile-side-bar">
+  <button class="mside-btn" onclick="toggleSide('groups')">☰ 工作小組</button>
+  <button class="mside-btn" onclick="toggleSide('zones')">🏮 燈區</button>
+</div>
+<div id="side-backdrop" onclick="closeSide()"></div>
 
 <div id="main">
   <!-- 左側：19 組 -->
@@ -303,7 +350,7 @@ const SUSTAIN_ISSUES = [{"name": "（20260701_數研處【17 科技資訊組】�
 
 // ── 狀態 ──────────────────────────────────────────────────────────────────────
 let activeMonth='all', activeGroup=null, activeZone=null, activeRisk=null;
-let showBlockOnly=false, searchQuery='', activeMType='all', activeCType='all';
+let showBlockOnly=false, showTodoOnly=false, searchQuery='', activeMType='all', activeCType='all';
 let sSFilterStatus='all', sSSearchQuery='', sSViewMode='card';
 let currentTab='meetings';
 
@@ -317,6 +364,8 @@ function switchTab(tab, btn) {
   document.getElementById('meeting-filters').style.display = tab==='meetings' ? 'flex' : 'none';
   document.getElementById('type-filters').style.display    = tab==='meetings' ? 'flex' : 'none';
   document.getElementById('panel-groups').style.display    = tab==='meetings' ? 'block' : 'none';
+  var msb=document.getElementById('mobile-side-bar'); if(msb) msb.style.display = tab==='meetings' ? '' : 'none';
+  closeSide();
   if(tab==='sustain') renderSustain();
 }
 
@@ -362,6 +411,7 @@ function getFiltered() {
     if(activeMonth!=='all'&&m.month!==activeMonth) return false;
     if(activeRisk&&!m.risk.includes(activeRisk)) return false;
     if(showBlockOnly&&!m.hasBlock) return false;
+    if(showTodoOnly&&!m.hasTodo) return false;
     if(activeGroup&&!(m.groups||[]).includes(activeGroup)) return false;
     if(activeZone&&!(m.zones||[]).includes(activeZone)) return false;
     if(activeMType==='__unset__'&&m.mtype) return false;
@@ -570,9 +620,11 @@ function setSView(mode,btn){
 }
 
 // ── 篩選控制 ──────────────────────────────────────────────────────────────────
-function setMonth(m,btn){activeMonth=m;document.querySelectorAll('#meeting-filters .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeRisk=null;showBlockOnly=false;renderTimeline();}
-function setRisk(r,btn){activeRisk=activeRisk===r?null:r;showBlockOnly=false;document.querySelectorAll('#meeting-filters .filter-btn').forEach(b=>b.classList.remove('active'));if(activeRisk&&btn)btn.classList.add('active');renderTimeline();}
-function setBlock(btn){showBlockOnly=!showBlockOnly;activeRisk=null;document.querySelectorAll('#meeting-filters .filter-btn').forEach(b=>b.classList.remove('active'));if(showBlockOnly&&btn)btn.classList.add('active');renderTimeline();}
+function _clearToggleBtns(){document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));}
+function setMonth(m,btn){activeMonth=m;document.querySelectorAll('#meeting-filters .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeRisk=null;showBlockOnly=false;showTodoOnly=false;_clearToggleBtns();renderTimeline();}
+function setRisk(r,btn){activeRisk=activeRisk===r?null:r;showBlockOnly=false;showTodoOnly=false;_clearToggleBtns();if(activeRisk&&btn)btn.classList.add('active');renderTimeline();}
+function setBlock(btn){showBlockOnly=!showBlockOnly;activeRisk=null;showTodoOnly=false;_clearToggleBtns();if(showBlockOnly&&btn)btn.classList.add('active');renderTimeline();}
+function setTodo(btn){showTodoOnly=!showTodoOnly;activeRisk=null;showBlockOnly=false;_clearToggleBtns();if(showTodoOnly&&btn)btn.classList.add('active');renderTimeline();}
 function setMType(t,btn){
   activeMType=t;
   document.querySelectorAll('#mtype-filters .filter-btn').forEach(b=>b.classList.remove('active'));
@@ -585,8 +637,8 @@ function setCType(t,btn){
   btn.classList.add('active');
   renderTimeline();
 }
-function setGroup(g){activeGroup=activeGroup===g?null:g;renderGroups();renderTimeline();}
-function setZone(z){activeZone=activeZone===z?null:z;renderZones();renderTimeline();}
+function setGroup(g){activeGroup=activeGroup===g?null:g;renderGroups();renderTimeline();closeSide();}
+function setZone(z){activeZone=activeZone===z?null:z;renderZones();renderTimeline();closeSide();}
 function onSearch(q){searchQuery=q;renderTimeline();}
 function setSFilter(s,btn){sSFilterStatus=s;document.querySelectorAll('.s-filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSustain();}
 function onSSearch(q){sSSearchQuery=q;renderSustain();}
@@ -607,6 +659,27 @@ function closeBodyDrawer(){
   document.getElementById('body-drawer').classList.remove('open');
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeBodyDrawer();});
+
+// ── 手機版側欄抽屜 ────────────────────────────────────────────────────────────
+function toggleSide(which){
+  const gp=document.getElementById('panel-groups');
+  const zp=document.getElementById('panel-zones');
+  const bd=document.getElementById('side-backdrop');
+  const target=which==='groups'?gp:zp;
+  const other =which==='groups'?zp:gp;
+  if(other)other.classList.remove('mobile-open');
+  const willOpen=target&&!target.classList.contains('mobile-open');
+  if(target)target.classList.toggle('mobile-open',willOpen);
+  if(bd)bd.classList.toggle('open',willOpen);
+}
+function closeSide(){
+  const gp=document.getElementById('panel-groups');
+  const zp=document.getElementById('panel-zones');
+  const bd=document.getElementById('side-backdrop');
+  if(gp)gp.classList.remove('mobile-open');
+  if(zp)zp.classList.remove('mobile-open');
+  if(bd)bd.classList.remove('open');
+}
 
 // ── 初始化 ────────────────────────────────────────────────────────────────────
 renderGroups();renderZones();renderTimeline();
