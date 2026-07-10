@@ -286,7 +286,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="stat"><div class="val green">0</div><div class="lbl">已完成</div></div>
     <div class="stat"><div class="val" style="color:var(--a2)">0</div><div class="lbl">進行中</div></div>
   </div>
-  <span class="gen-time">更新：2026-07-10 20:52</span>
+  <span class="gen-time">更新：2026-07-10 22:08</span>
   <div class="filter-row" id="meeting-filters">
     <input id="search" type="text" placeholder="搜尋…" oninput="onSearch(this.value)">
     <button class="filter-btn active" onclick="setMonth('all',this)">全部</button>
@@ -489,6 +489,12 @@ function ctypeBadge(ctype){
   return `<span class="ctype-badge ${cls}">${ctype}</span>`;
 }
 
+function fmtSummary(s){
+  // 重點摘要：依項次 (1)(2)… 換行，方便一眼掃描；
+  // 行內數字括號（如 (2-3頁)、(約2,760萬)）為多字元，不會被單一數字規則命中。
+  if(!s) return '';
+  return s.replace(/\s*\((\d)\)/g, '\n($1) ').trim();
+}
 function renderTimeline() {
   const filtered=getFiltered();
   document.getElementById('count-label').textContent=`（${filtered.length} 場）`;
@@ -513,7 +519,7 @@ function renderTimeline() {
         const mTag=mtypeBadge(m.mtype);
         const bTag=m.hasBlock?`<span class="tag block">⚠ 卡關</span>`:'';
         const dTag=m.hasTodo?`<span class="tag todo">✓ 待辦</span>`:'';
-        const sumSec=m.summary?`<div class="det-sec"><div class="det-lbl">重點摘要</div><div class="det-box">${m.summary}</div></div>`:'';
+        const sumSec=m.summary?`<div class="det-sec"><div class="det-lbl">重點摘要</div><div class="det-box">${fmtSummary(m.summary)}</div></div>`:'';
         const todSec=m.hasTodo?`<div class="det-sec"><div class="det-lbl">待辦事項</div><div class="det-box tc">${m.todos}</div></div>`:'';
         const blkSec=m.hasBlock?`<div class="det-sec"><div class="det-lbl">⚠ 卡關議題</div><div class="det-box bc">${m.blockage}</div></div>`:'';
         const bodyBtn=(m.bodyLen)?`<div class="det-action-row"><button class="body-btn" onclick="event.stopPropagation();openBodyDrawer(${m.idx})">📄 完整會議記錄</button><span style="font-size:12px;color:var(--text2);margin-left:8px">${m.bodyLen} 字</span></div>`:'';
